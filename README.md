@@ -13,11 +13,17 @@ This bot was made with Java 11 in mind, so you will need to use Java 11 or newer
 4. Run the bot with `java -jar TranslateBot-1.0-all.jar`
 
 ### To Do
-Add help command
-Add uptime command
-Add more languages & flags
-Add functionality to make the bot an App
+Add help command.
+
+Add uptime command.
+
+Add more languages & flags.
+
+Add functionality to make the bot an App.
+
 DeepL support?
-Nicer embed appearance
+
+Nicer embed appearance.
+
 
 Any suggestions are greatly appreciated! Please open an issue if you have ideas.
