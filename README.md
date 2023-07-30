@@ -12,18 +12,13 @@ This bot was made with Java 11 in mind, so you will need to use Java 11 or newer
 3. Put your bot token, bot name, and prefix into config.json.
 4. Run the bot with `java -jar TranslateBot-1.0-all.jar`
 
+If you want to use DeepL, change "DeepLEnabled" to "true", and set your DeepLKey in config.json. If you want to use Google Translate when DeepL doesnt have the language to translate to, change "UseGoogleAsFallbackForDeepL" to "true". If you want to change the DeepL emoji, change "DeepLEmoji" to one you wish to use.
 ### To Do
-Add help command.
 
 Add uptime command.
 
 Add more languages & flags.
 
 Add functionality to make the bot an App.
-
-DeepL support?
-
-Nicer embed appearance.
-
 
 Any suggestions are greatly appreciated! Please open an issue if you have ideas.
