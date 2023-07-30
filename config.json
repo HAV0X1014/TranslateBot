@@ -1,7 +1,11 @@
 {
   "Config": {
-    "Token": "Put your BOT TOKEN here",
+    "Token": "",
     "BotName": "Translator Bot",
-    "Prefix": "$"
+    "Prefix": "$",
+    "DeepLEnabled": "false",
+    "DeepLKey": "",
+    "DeepLEmoji": "\uD83C\uDDE9",
+    "UseGoogleAsFallbackForDeepL": "false"
   }
 }
