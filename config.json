@@ -1,0 +1,7 @@
+{
+  "Config": {
+    "Token": "Put your BOT TOKEN here",
+    "BotName": "Translator Bot",
+    "Prefix": "$"
+  }
+}
