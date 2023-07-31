@@ -5,6 +5,8 @@ A very simple Javacord bot for translating messages. Designed to be self-hostabl
 React to a message with a flag emoji to translate it into that language.
 Use `$translate [text]` to translate a string into English.
 
+To remove a translation message, react to the translation with the "X" emoji.
+
 ### Hosting
 This bot was made with Java 11 in mind, so you will need to use Java 11 or newer.
 1. Download the JAR and config.json file.
