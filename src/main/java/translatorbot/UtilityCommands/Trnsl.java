@@ -8,10 +8,8 @@ import org.javacord.api.entity.message.embed.EmbedBuilder;
 import java.awt.*;
 
 public class Trnsl {
-    public static EmbedBuilder trnsl(String textToTranslate, Language targetLang) {
+    public static EmbedBuilder trnsl(Translator translator, String textToTranslate, Language targetLang) {
         String translatedText = null;
-
-        Translator translator = new Translator();
 
         Translation tr = translator.translateBlocking(textToTranslate, targetLang, Language.AUTO);
         translatedText = tr.getTranslatedText();

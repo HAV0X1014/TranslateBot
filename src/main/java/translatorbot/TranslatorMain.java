@@ -1,6 +1,7 @@
 package translatorbot;
 
 import me.bush.translator.Language;
+import me.bush.translator.Translator;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -9,19 +10,24 @@ import translatorbot.UtilityCommands.DeepL;
 import translatorbot.UtilityCommands.Trnsl;
 
 import java.awt.*;
+import java.util.Arrays;
 
 public class TranslatorMain {
-    static String token = ConfigHandler.config("Token");
-    static String BotName = ConfigHandler.config("BotName");
-    static String Prefix = ConfigHandler.config("Prefix");
-    static boolean DeeplEnabled = Boolean.parseBoolean(ConfigHandler.config("DeepLEnabled"));
-    static String DeepLEmoji = ConfigHandler.config("DeepLEmoji");
-    static boolean UseGoogleAsFallbackForDeepL = Boolean.parseBoolean(ConfigHandler.config("UseGoogleAsFallbackForDeepL"));
+    static String token = ConfigHandler.getString("Token");
+    static String BotName = ConfigHandler.getString("BotName");
+    static String Prefix = ConfigHandler.getString("Prefix");
+    static boolean DeeplEnabled = Boolean.parseBoolean(ConfigHandler.getString("DeepLEnabled"));
+    static String DeepLEmoji = ConfigHandler.getString("DeepLEmoji");
+    static boolean UseGoogleAsFallbackForDeepL = Boolean.parseBoolean(ConfigHandler.getString("UseGoogleAsFallbackForDeepL"));
+    static String Key = ConfigHandler.getString("DeepLKey");
+    static String[] IgnoredChannels = ConfigHandler.getArray("IgnoredChannels");
 
     public static void main(String[] args) {
         DiscordApi api = new DiscordApiBuilder().setToken(token).setAllIntents().login().join();
         System.out.println(BotName + " logged in.");
         String self = api.getYourself().getIdAsString();
+        Translator translator = new Translator(); //google translate object
+        com.deepl.api.Translator deepLTranslator = new com.deepl.api.Translator(Key); //deepL translator object
 
         api.addReactionAddListener(ra -> {
             String emoji = ra.getEmoji().asUnicodeEmoji().orElse("");
@@ -36,24 +42,27 @@ public class TranslatorMain {
 
             switch(emoji) {
                 case "❌":
-                    if (deleteCandidate.equals(self)) {
-                        String del = ra.requestMessage().join().getIdAsString();
-                        api.getMessageById(del, ra.getChannel()).join().delete();
+                    if (deleteCandidate.equals(self)) { //self delete when X emoji is seen
+                        if (ra.requestMessage().join().getEmbeds().get(0).getTitle().toString().startsWith("Translated Text")) { //only delete if it is a translation message
+                            String del = ra.requestMessage().join().getIdAsString();
+                            api.getMessageById(del, ra.getChannel()).join().delete();
+                        }
                     }
                     return;
+
                 case "\uD83C\uDDFA\uD83C\uDDF8": //USA English
-                    targetLang = Language.ENGLISH;
-                    dlLang = "en-US";
-                    break;
                 case "\uD83C\uDDE8\uD83C\uDDE6": //Canada English
+                case "\uD83C\uDDFB\uD83C\uDDEE": //US Virgin Islands English
+                case "\uD83C\uDDEC\uD83C\uDDFA": //Guam English
                     targetLang = Language.ENGLISH;
                     dlLang = "en-US";
                     break;
                 case "\uD83C\uDDE6\uD83C\uDDFA": //Australia English
-                    targetLang = Language.ENGLISH;
-                    dlLang = "en-GB";
-                    break;
                 case "\uD83C\uDDEC\uD83C\uDDE7": //United Kingdom English
+                case "\uD83C\uDDF3\uD83C\uDDFF": //New Zealand English
+                case "\uD83C\uDDFB\uD83C\uDDEC": //British Virgin Islands English
+                case "\uD83C\uDDEC\uD83C\uDDEE": //Gibraltar English
+                case "\uD83C\uDDEE\uD83C\uDDF2": //Isle of Man English
                     targetLang = Language.ENGLISH;
                     dlLang = "en-GB";
                     break;
@@ -62,33 +71,47 @@ public class TranslatorMain {
                     dlLang = "pl";
                     break;
                 case "\uD83C\uDDE8\uD83C\uDDF3": //China Chinese Simplified
+                case "\uD83C\uDDF8\uD83C\uDDEC": //Singapore Chinese Simplified
                     targetLang = Language.CHINESE_SIMPLIFIED;
                     dlLang = "zh";
                     break;
+                case "\uD83C\uDDED\uD83C\uDDF0": //Hong Kong Chinese Traditional
+                case "\uD83C\uDDF9\uD83C\uDDFC": //Taiwan Chinese Traditional
+                    targetLang = Language.CHINESE_TRADITIONAL;
+                    dlLang = "zh";
+                    break;
                 case "\uD83C\uDDEE\uD83C\uDDF3": //Hindi OR India idk
+                case "\uD83C\uDDF5\uD83C\uDDF0": //Pakistan Hindi
                     targetLang = Language.HINDI;
                     break;
                 case "\uD83C\uDDF2\uD83C\uDDFD": //Mexico Spanish
-                    targetLang = Language.SPANISH;
-                    dlLang = "es";
-                    break;
+                case "\uD83C\uDDE8\uD83C\uDDF4": //Colombia Spanish
                 case "\uD83C\uDDEA\uD83C\uDDF8": //Spain Spanish
-                    targetLang = Language.SPANISH;
-                    dlLang = "es";
-                    break;
+                case "\uD83C\uDDE6\uD83C\uDDF7": //Argentina Spanish
+                case "\uD83C\uDDF5\uD83C\uDDEA": //Peru Spanish
+                case "\uD83C\uDDFB\uD83C\uDDEA": //Venezuela Spanish
+                case "\uD83C\uDDE8\uD83C\uDDF1": //Chile Spanish
                 case "\uD83C\uDDEC\uD83C\uDDF9": //Guatemala Guatemala
+                case "\uD83C\uDDF5\uD83C\uDDF7": //Puerto Rico Spanish
                     targetLang = Language.SPANISH;
                     dlLang = "es";
                     break;
                 case "\uD83C\uDDEB\uD83C\uDDF7": //France French
+                case "\uD83C\uDDF2\uD83C\uDDEC": //Madagascar French
+                case "\uD83C\uDDE8\uD83C\uDDF2": //Cameroon French
+                case "\uD83C\uDDE8\uD83C\uDDEE": //Cote d' Ivoire French
+                case "\uD83C\uDDF3\uD83C\uDDEA": //Niger French
+                case "\uD83C\uDDE7\uD83C\uDDEF": //Benin French
                     targetLang = Language.FRENCH;
                     dlLang = "fr";
                     break;
                 case "\uD83C\uDDF7\uD83C\uDDFA": //Russia Russian
+                case "\uD83C\uDDE7\uD83C\uDDFE": //Belarus Russian
                     targetLang = Language.RUSSIAN;
                     dlLang = "ru";
                     break;
                 case "\uD83C\uDDF5\uD83C\uDDF9": //Portugal Portuguese
+                case "\uD83C\uDDF2\uD83C\uDDFF": //Mozambique Portuguese
                     targetLang = Language.PORTUGUESE;
                     dlLang = "pt-PT";
                     break;
@@ -97,6 +120,7 @@ public class TranslatorMain {
                     dlLang = "pt-BR";
                     break;
                 case "\uD83C\uDDE9\uD83C\uDDEA": //Germany German
+                case "\uD83C\uDDF1\uD83C\uDDEE": //Liechtenstein German
                     targetLang = Language.GERMAN;
                     dlLang = "de";
                     break;
@@ -108,9 +132,6 @@ public class TranslatorMain {
                     targetLang = Language.FILIPINO;
                     break;
                 case "\uD83C\uDDF0\uD83C\uDDF7": //South Korea Korean
-                    targetLang = Language.KOREAN;
-                    dlLang = "ko";
-                    break;
                 case "\uD83C\uDDF0\uD83C\uDDF5": //North Korea Korean
                     targetLang = Language.KOREAN;
                     dlLang = "ko";
@@ -123,43 +144,46 @@ public class TranslatorMain {
                     dlLang = "it";
                     break;
                 case "\uD83C\uDDF2\uD83C\uDDFE": //Malaysia Malay
+                case "\uD83C\uDDE7\uD83C\uDDF3": //Brunei Malay
                     targetLang = Language.MALAY;
                     break;
                 default:
                     return;
             }
-            if (allemoji.contains(DeepLEmoji)) {
-                if (DeeplEnabled) { //Check for the DeepL emoji (the one that says to use DeepL if reacted)
-                    if (dlLang == null) { //some languages aren't on DeepL. If the language isn't supported, it will be null because it wasn't set in the switch case
-                        if (UseGoogleAsFallbackForDeepL) { //if DeepL isn't able to translate into the language, use Google as a fallback translator.
-                            ra.getChannel().sendMessage(Trnsl.trnsl(messageContent, targetLang));
+            if (!Arrays.toString(IgnoredChannels).contains(ra.requestMessage().join().getChannel().getIdAsString())) { //if IgnoredChannels does NOT include the reaction channel, continue
+                if (allemoji.contains(DeepLEmoji)) {
+                    if (DeeplEnabled) { //Check for the DeepL emoji (the one that says to use DeepL if reacted)
+                        if (dlLang == null) { //some languages aren't on DeepL. If the language isn't supported, it will be null because it wasn't set in the switch case
+                            if (UseGoogleAsFallbackForDeepL) { //if DeepL isn't able to translate into the language, use Google as a fallback translator.
+                                ra.getChannel().sendMessage(Trnsl.trnsl(translator, messageContent, targetLang));
+                            } else {
+                                ra.getChannel().sendMessage("This language is not supported by DeepL.");
+                            }
                         } else {
-                            ra.getChannel().sendMessage("This language is not supported by DeepL.");
+                            ra.getChannel().sendMessage(DeepL.deepl(deepLTranslator, messageContent, dlLang)); //Translate if successful
                         }
                     } else {
-                        ra.getChannel().sendMessage(DeepL.deepl(messageContent, dlLang)); //Translate if successful
+                        ra.getChannel().sendMessage(Trnsl.trnsl(translator, messageContent, targetLang)); //use Google if DeepL isnt enabled.
                     }
                 } else {
-                    ra.getChannel().sendMessage(Trnsl.trnsl(messageContent, targetLang)); //use Google if DeepL isnt enabled.
+                    ra.getChannel().sendMessage(Trnsl.trnsl(translator, messageContent, targetLang)); //use Google if there isnt a DeepL emoji.
                 }
-            } else {
-                ra.getChannel().sendMessage(Trnsl.trnsl(messageContent, targetLang)); //use Google if there isnt a DeepL emoji.
             }
-            });
+        });
 
         api.addMessageCreateListener(mc -> {
             String m = mc.getMessageContent();
 
             if (m.toLowerCase().startsWith(Prefix + "translate")) {
                 String textToTranslate = m.replace(Prefix + "translate ", "");
-                mc.getMessage().reply(Trnsl.trnsl(textToTranslate, Language.ENGLISH));
+                mc.getMessage().reply(Trnsl.trnsl(translator, textToTranslate, Language.ENGLISH));
             }
 
             if (DeeplEnabled) {
                 if (m.toLowerCase().startsWith(Prefix + "deepl")) {
                     String textToTranslate = m.replace(Prefix + "deepl ", "");
                     Thread deeplThread = new Thread(() -> {
-                        mc.getMessage().reply(DeepL.deepl(textToTranslate, "en-US"));
+                        mc.getMessage().reply(DeepL.deepl(deepLTranslator, textToTranslate, "en-US"));
                     });
                     deeplThread.start();
                 }
