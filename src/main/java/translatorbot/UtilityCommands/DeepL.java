@@ -13,7 +13,7 @@ public class DeepL {
         try {
             translatedText = deepLTranslator.translateText(textToTranslate, null, targetLang);
         } catch (DeepLException | InterruptedException e) {
-            throw new RuntimeException(e);
+            return null;
         }
 
         EmbedBuilder e = new EmbedBuilder();

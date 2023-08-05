@@ -5,21 +5,14 @@ import me.bush.translator.Translator;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
-import org.javacord.api.entity.permission.Permissions;
 import org.javacord.api.entity.permission.PermissionsBuilder;
-import org.javacord.api.interaction.SlashCommand;
-import org.javacord.api.interaction.SlashCommandInteraction;
-import org.javacord.api.interaction.SlashCommandOption;
-import org.javacord.api.interaction.SlashCommandOptionType;
+import org.javacord.api.interaction.*;
 import translatorbot.FileHandlers.ConfigHandler;
 import translatorbot.UtilityCommands.DeepL;
 import translatorbot.UtilityCommands.Help;
 import translatorbot.UtilityCommands.Trnsl;
 
-import java.awt.*;
-import java.awt.font.LineMetrics;
 import java.util.Arrays;
 
 public class TranslatorMain {
@@ -33,6 +26,7 @@ public class TranslatorMain {
     static String[] ignoredChannels = ConfigHandler.getArray("IgnoredChannels");
     static String statusText = ConfigHandler.getString("StatusText");
     static boolean registerSlashCommands = ConfigHandler.getBoolean("RegisterSlashCommands");
+    static boolean registerApps = ConfigHandler.getBoolean("RegisterApps");
 
     public static void main(String[] args) {
         DiscordApi api = new DiscordApiBuilder().setToken(token).setAllIntents().login().join();
@@ -40,6 +34,7 @@ public class TranslatorMain {
         String self = api.getYourself().getIdAsString();
         api.updateActivity(ActivityType.PLAYING, statusText);
         Translator translator = new Translator(); //google translate object
+        if (key == null) key = "0";
         com.deepl.api.Translator deepLTranslator = new com.deepl.api.Translator(key); //deepL translator object
 
         if (registerSlashCommands) {
@@ -50,6 +45,35 @@ public class TranslatorMain {
             SlashCommand.with("deepl","Translate text with DeepL Translator into the desired language.", Arrays.asList(SlashCommandOption.create(SlashCommandOptionType.STRING, "source", "The text you want to translate.", true), SlashCommandOption.create(SlashCommandOptionType.STRING, "target", "The language you want the text in. (Currently not implemented)", false))).createGlobal(api).join();
             System.out.println("**Slash commands registered!** Set \"RegisterSlashCommands\" to false in config.json!");
         }
+
+        if (registerApps) {
+            System.out.println("Registering Apps. (The things that show up when you right click a message) This may take a while...");
+            MessageContextMenu.with("Translate - Google Translate").createGlobal(api).join();
+            MessageContextMenu.with("Translate - DeepL").createGlobal(api).join();
+            System.out.println("**Apps Registered!** Set \"RegisterApps\" to false in config.json!");
+        }
+
+        api.addMessageContextMenuCommandListener(event -> {
+            MessageContextMenuInteraction interaction = event.getMessageContextMenuInteraction();
+            String command = interaction.getCommandName();
+
+            switch(command) {
+                case "Translate - DeepL":
+                    interaction.respondLater().thenAccept(interactionOriginalResponseUpdater -> {
+                        if (deeplEnabled) {
+                            interactionOriginalResponseUpdater.setContent("").addEmbed(DeepL.deepl(deepLTranslator, interaction.getTarget().getContent(), "en-US")).update();
+                        } else {
+                            interactionOriginalResponseUpdater.setContent("DeepL translation is disabled.").update();
+                        }
+                    });
+                    break;
+                case "Translate - Google Translate":
+                    interaction.respondLater().thenAccept(interactionOriginalResponseUpdater -> {
+                        interactionOriginalResponseUpdater.setContent("").addEmbed(Trnsl.trnsl(translator,interaction.getTarget().getContent(), Language.ENGLISH)).update();
+                    });
+                    break;
+            }
+        });
 
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
@@ -66,7 +90,7 @@ public class TranslatorMain {
                         if (deeplEnabled) {
                             interactionOriginalResponseUpdater.setContent("").addEmbed(DeepL.deepl(deepLTranslator, interaction.getArgumentStringValueByName("source").get(), "en-US")).update();
                         } else {
-                            interactionOriginalResponseUpdater.setContent("DeepL translation is disabled.");
+                            interactionOriginalResponseUpdater.setContent("DeepL translation is disabled.").update();
                         }
                     });
                     break;
