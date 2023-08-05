@@ -3,9 +3,12 @@
     "Token": "",
     "BotName": "Translator Bot",
     "Prefix": "$",
-    "DeepLEnabled": "false",
+    "IgnoredChannels": ["",""],
+    "DeepLEnabled": true,
     "DeepLKey": "",
     "DeepLEmoji": "\uD83C\uDDE9",
-    "UseGoogleAsFallbackForDeepL": "false"
+    "UseGoogleAsFallbackForDeepL": false,
+    "RegisterSlashCommands": true,
+    "StatusText": ""
   }
 }
