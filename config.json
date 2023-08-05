@@ -5,10 +5,11 @@
     "Prefix": "$",
     "IgnoredChannels": ["",""],
     "DeepLEnabled": true,
-    "DeepLKey": "",
+    "DeepLKey": "0",
     "DeepLEmoji": "\uD83C\uDDE9",
     "UseGoogleAsFallbackForDeepL": false,
     "RegisterSlashCommands": true,
+    "RegisterApps": true,
     "StatusText": ""
   }
 }
