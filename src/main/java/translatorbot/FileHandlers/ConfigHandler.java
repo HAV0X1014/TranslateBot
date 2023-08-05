@@ -55,4 +55,21 @@ public class ConfigHandler {
 
         return values;
     }
+
+    public static boolean getBoolean(String option) {
+        String filePath = "config.json";
+        String fullText = "";
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                fullText += line;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        //this insanity just reads the full contents of the file and puts it to the String "fullText"
+
+        JSONObject obj = new JSONObject(fullText);
+        return obj.getJSONObject("Config").getBoolean(option);
+    }
 }
